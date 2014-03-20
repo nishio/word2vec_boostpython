@@ -27,12 +27,12 @@ project
 
 # Declare the three extension modules.  You can specify multiple
 # source files after the colon separated by spaces.
-python-extension hello_ext : hello.cpp ;
+python-extension word2vec_ext : word2vec.cpp ;
 
 # Put the extension and Boost.Python DLL in the current directory, so
 # that running script by hand works.
 install convenient_copy 
-  : hello_ext 
+  : word2vec_ext 
   : <install-dependencies>on <install-type>SHARED_LIB <install-type>PYTHON_EXTENSION 
     <location>. 
   ;
@@ -46,4 +46,4 @@ local rule run-test ( test-name : sources + )
 }
 
 # Declare test targets
-run-test hello : hello_ext hello.py ;
+run-test word2vec : word2vec_ext test.py ;
