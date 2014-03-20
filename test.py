@@ -3,8 +3,8 @@
 #  or copy at http://www.boost.org/LICENSE_1_0.txt)
 #  Hello World Example from the tutorial
 
-import hello_ext
+import word2vec_ext as w2v
 
-data = hello_ext.load("../word2vec/vectors.bin");
-assert "felis" in hello_ext.search(data, "cat");
+data = w2v.load("../word2vec/vectors.bin");
+assert "felis" in w2v.search(data, "cat");
 
