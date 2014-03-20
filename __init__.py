@@ -1,1 +1,1 @@
-from hello_ext import *
+from word2vec_ext import *
