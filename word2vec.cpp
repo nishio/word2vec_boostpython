@@ -1015,6 +1015,15 @@ boost::python::list find_analogy(Data* data, std::string s1, std::string s2, std
   return get_nearest(data, vec, bi, cn);
 }
 
+void run(boost::python::list args){
+  int N = len(args);
+  char* argv[N];
+  for(int i = 0; i < N; i++){
+    argv[i + 1] = boost::python::extract<char*>(args[i]);
+  }
+  main(N, argv);
+}
+
 BOOST_PYTHON_MODULE(hello_ext)
 {
     using namespace boost::python;
@@ -1030,7 +1039,7 @@ BOOST_PYTHON_MODULE(hello_ext)
     def("find_analogy", find_analogy);
     def("get_sum_vector", get_sum_vector);
     def("find_with_vector", find_with_vector);
-
+    def("run", run);
     class_<Data>("Data")
       //      .def("__call__",
       //     &accumulator::operator())
