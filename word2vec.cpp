@@ -862,6 +862,27 @@ boost::python::list get_vector(Data* data, std::string word){
   return ret;
 }
 
+boost::python::list get_outvector(int index){
+  // out-vectors are not saved in output file
+  // extract them from trained model
+  boost::python::list ret;
+  if(index == -1) return ret;
+  for(size_t i = 0; i < layer1_size; i++){
+    ret.append(syn1[i + index * layer1_size]);
+  }
+  return ret;
+}
+
+boost::python::list get_invector(int index){
+  // counter part of get_outvector
+  boost::python::list ret;
+  if(index == -1) return ret;
+  for(size_t i = 0; i < layer1_size; i++){
+    ret.append(syn0[i + index * layer1_size]);
+  }
+  return ret;
+}
+
 boost::python::list get_nearest(Data* data, float* vec, long long* ignore, int num_ignore){
   boost::python::list result;
   float dist, bestd[N];
@@ -1039,6 +1060,8 @@ BOOST_PYTHON_MODULE(word2vec_ext)
     def("get_word", get_word);
     def("get_word_index", get_word_index);
     def("get_vector", get_vector);
+    def("get_outvector", get_outvector);
+    def("get_invector", get_invector);
     def("find_add", find_add);
     def("find_sub", find_sub);
     def("find_analogy", find_analogy);
