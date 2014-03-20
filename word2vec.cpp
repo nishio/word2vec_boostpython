@@ -28,6 +28,8 @@
 #include <malloc.h>
 #include <pthread.h>
 
+// === code from word2vec.c ===
+
 #define MAX_STRING 100
 #define EXP_TABLE_SIZE 1000
 #define MAX_EXP 6
@@ -691,6 +693,7 @@ int word2vec_main(int argc, char **argv) {
   return 0;
 }
 
+// === end of code from word2vec.c ===
 
 const long long max_size = 2000;         // max length of strings
 const long long N = 40;                  // number of closest words that will be shown
@@ -729,6 +732,7 @@ Data* load_without_normalize(std::string file_name){
   return _load(file_name, false);
 }
 
+// from distance.c, modified to change normalization
 Data* _load(std::string file_name, bool normalize){
   FILE *f;
   long long a, b;
@@ -770,6 +774,7 @@ Data* _load(std::string file_name, bool normalize){
   return result;
 }
 
+// from distance.c: modified interface, refactored
 boost::python::list search(Data* data, std::string st1){
   boost::python::list result;
   char st[100][max_size];
