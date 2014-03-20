@@ -23,8 +23,13 @@ test(invec,
        0.56097811460495, -0.3129468262195587, -0.019592970609664917,
        -0.6972821950912476])
 
+num_words = w2v.get_num_words_from_model()
+
 
 data = w2v.load("tiny_corpus.bin");
+test(
+    w2v.get_num_words(data),
+    num_words)
 
 test(
     w2v.search(data, "1")[:5],

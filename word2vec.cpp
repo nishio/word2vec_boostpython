@@ -836,6 +836,10 @@ long long get_num_words(Data* data){
   return data->words;
 }
 
+long long get_num_words_from_model(){
+  return vocab_size;
+}
+
 boost::python::str get_word(Data* data, long long i){
   return boost::python::str(
     const_cast<const char*>(&data->vocab[i * max_w]));
@@ -1057,6 +1061,7 @@ BOOST_PYTHON_MODULE(word2vec_ext)
     def("load_without_normalize", load_without_normalize, return_value_policy<manage_new_object>());
     def("search", search);
     def("get_num_words", get_num_words);
+    def("get_num_words_from_model", get_num_words_from_model);
     def("get_word", get_word);
     def("get_word_index", get_word_index);
     def("get_vector", get_vector);
