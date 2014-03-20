@@ -1024,7 +1024,7 @@ void run(boost::python::list args){
   main(N, argv);
 }
 
-BOOST_PYTHON_MODULE(hello_ext)
+BOOST_PYTHON_MODULE(word2vec_ext)
 {
     using namespace boost::python;
     def("load", load, return_value_policy<manage_new_object>());
@@ -1040,6 +1040,7 @@ BOOST_PYTHON_MODULE(hello_ext)
     def("get_sum_vector", get_sum_vector);
     def("find_with_vector", find_with_vector);
     def("run", run);
+
     class_<Data>("Data")
       //      .def("__call__",
       //     &accumulator::operator())
