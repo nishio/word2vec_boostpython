@@ -618,7 +618,7 @@ int ArgPos(char *str, int argc, char **argv) {
   return -1;
 }
 
-int main(int argc, char **argv) {
+int word2vec_main(int argc, char **argv) {
   int i;
   if (argc == 1) {
     printf("WORD VECTOR estimation toolkit v 0.1b\n\n");
@@ -1021,7 +1021,7 @@ void run(boost::python::list args){
   for(int i = 0; i < N; i++){
     argv[i + 1] = boost::python::extract<char*>(args[i]);
   }
-  main(N, argv);
+  word2vec_main(N + 1, argv);
 }
 
 BOOST_PYTHON_MODULE(word2vec_ext)
