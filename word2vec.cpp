@@ -703,8 +703,8 @@ char *bestw[N];
 
 class Data {
 public:
-  long long words;
-  long long size;
+  unsigned long long words;
+  unsigned long long size;
   float *matrix;
   char *vocab;
 };
