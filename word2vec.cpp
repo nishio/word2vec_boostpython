@@ -875,7 +875,7 @@ boost::python::list get_outvector(int index){
   boost::python::list ret;
   if(index == -1) return ret;
   for(size_t i = 0; i < layer1_size; i++){
-    ret.append(syn1[i + index * layer1_size]);
+    ret.append(syn1neg[i + index * layer1_size]);
   }
   return ret;
 }
