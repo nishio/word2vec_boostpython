@@ -21,6 +21,7 @@
 #include <boost/python/exception_translator.hpp>
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/manage_new_object.hpp>
+#include <boost/numpy.hpp>
 
 #include <stdio.h>
 #include <string.h>

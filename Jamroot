@@ -23,6 +23,7 @@ project
   : requirements <library>/boost/python//boost_python 
                  <implicit-dependency>/boost//headers 
   : usage-requirements <implicit-dependency>/boost//headers 
+  : requirements <include>./Boost.NumPy
   ;
 
 # Declare the three extension modules.  You can specify multiple
