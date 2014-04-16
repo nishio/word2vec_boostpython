@@ -21,7 +21,6 @@
 #include <boost/python/exception_translator.hpp>
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/manage_new_object.hpp>
-#include <boost/numpy.hpp>
 
 #include <numpy/arrayobject.h>
 #include <numpy/ufuncobject.h>
@@ -1063,13 +1062,6 @@ void run(boost::python::list args){
 
 float data[12] = {1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5};
 PyObject* test(){
-  //boost::python::tuple shape = boost::python::make_tuple(3, 3);
-  //boost::numpy::dtype dtype = boost::numpy::dtype::dtype(
-  //  boost::python::detail::new_reference(
-  //    reinterpret_cast<PyObject*>(PyArray_DescrFromType(NPY_FLOAT32))));
-
-  //boost::numpy::ndarray ret = boost::numpy::zeros(shape, dtype);
-  //return PyArray_Zeros(2, dims, PyArray_DescrFromType(NPY_FLOAT32), false);
   long dims[2] = {3, 4};
   return PyArray_SimpleNewFromData(2, dims, NPY_FLOAT32, data);
 }

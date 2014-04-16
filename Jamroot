@@ -16,17 +16,13 @@ if ! [ python.configured ]
 use-project boost
   : /home/nishio/boost_1_55_0 ;
 
-use-project /boost/numpy : ./Boost.NumPy/libs/numpy/src ;
-
 # Set up the project-wide requirements that everything uses the
 # boost_python library from the project whose global ID is
 # /boost/python.
 project
   : requirements <library>/boost/python//boost_python 
                  <implicit-dependency>/boost//headers
-                 <library>/boost/numpy//boost_numpy
   : usage-requirements <implicit-dependency>/boost//headers 
-  : requirements <include>./Boost.NumPy
   ;
 
 # Declare the three extension modules.  You can specify multiple
