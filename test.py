@@ -43,3 +43,5 @@ test(w2v.get_vector(data2, 'd'), invec)
 
 test(w2v.find_sub(data, ['A', 'b'], ['a'])[:5],
      ['B', '2', 'H', 'h', '8'])  # 'A' + 'b' - 'a'
+
+w2v.test()

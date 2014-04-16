@@ -23,6 +23,9 @@
 #include <boost/python/manage_new_object.hpp>
 #include <boost/numpy.hpp>
 
+#include <numpy/arrayobject.h>
+#include <numpy/ufuncobject.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -1058,6 +1061,20 @@ void run(boost::python::list args){
   word2vec_main(N + 1, argv);
 }
 
+float data[12] = {1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5};
+PyObject* test(){
+  //boost::python::tuple shape = boost::python::make_tuple(3, 3);
+  //boost::numpy::dtype dtype = boost::numpy::dtype::dtype(
+  //  boost::python::detail::new_reference(
+  //    reinterpret_cast<PyObject*>(PyArray_DescrFromType(NPY_FLOAT32))));
+
+  //boost::numpy::ndarray ret = boost::numpy::zeros(shape, dtype);
+  //return PyArray_Zeros(2, dims, PyArray_DescrFromType(NPY_FLOAT32), false);
+  long dims[2] = {3, 4};
+  return PyArray_SimpleNewFromData(2, dims, NPY_FLOAT32, data);
+}
+
+
 BOOST_PYTHON_MODULE(word2vec_ext)
 {
     using namespace boost::python;
@@ -1077,6 +1094,9 @@ BOOST_PYTHON_MODULE(word2vec_ext)
     def("get_sum_vector", get_sum_vector);
     def("find_with_vector", find_with_vector);
     def("run", run);
+    def("test", test);
+    import_array();
+
 
     class_<Data>("Data")
       //      .def("__call__",
