@@ -11,7 +11,7 @@ Code License: Apache License 2.0 (same to original project)
 
 ## How to use
 
-You need to fix some hard-coded config.
+You need to fix some hard-coded config. If you know how to automate this, please help me.
 
 path to boost in Jamroot:
 
@@ -21,10 +21,6 @@ path to boost in Jamroot:
 path to boost tools in boost-build:
 
     boost-build /home/nishio/boost_1_55_0/tools/build/v2 ;
-
-path to word2vec output for test in hello.py:
-
-    data = hello_ext.load("../word2vec/vectors.bin");
 
 Then run $ <bjam_path>/bjam
 
