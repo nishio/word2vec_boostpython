@@ -31,6 +31,14 @@
 #include <malloc.h>
 #include <pthread.h>
 
+struct my_exception : std::exception
+{
+  my_exception(const char* message):_message(message){}
+  const char* what() const throw() { return _message; }
+  const char* _message;
+};
+
+
 // === code from word2vec.c ===
 
 #define MAX_STRING 100
@@ -371,12 +379,91 @@ void InitNet() {
   CreateBinaryTree();
 }
 
+void train_negative_sampling(
+  long long word_in, long long word_out,
+  real alpha,
+  long long unsigned* next_random,
+  real* neu1, real* neu1e
+){
+  long long target;
+  long long label; // 1 for correct sample, 0 for random sample
+  for (long long d = 0; d < negative + 1; d++) {
+    if (d == 0) {
+      target = word_in;
+      label = 1;
+    } else {
+      *next_random = *next_random * (unsigned long long)25214903917 + 11;
+      target = table[(*next_random >> 16) % table_size];
+      if (target == 0) target = *next_random % (vocab_size - 1) + 1;
+      if (target == word_in) continue;
+      label = 0;
+    }
+    long long v1 = word_out * layer1_size;
+    long long v2 = target * layer1_size;
+
+    real f = 0, g;
+    for (long long c = 0; c < layer1_size; c++){
+      f += syn0[c + v1] * syn1neg[c + v2];
+    }
+
+    if (f > MAX_EXP){
+      g = (label - 1) * alpha;
+    } else if (f < -MAX_EXP){
+      g = (label - 0) * alpha;
+    } else {
+      g = (label - sigmoidTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))]) * alpha;
+    }
+
+    for (long long c = 0; c < layer1_size; c++){
+      neu1e[c] += g * syn1neg[c + v2];
+    }
+    for (long long c = 0; c < layer1_size; c++){
+      syn1neg[c + v2] += g * syn0[c + v1];
+    }
+  }
+}
+
+void train_hierarchical_softmax(
+  long long word_in, long long word_out,
+  real alpha,
+  long long unsigned* next_random,
+  real* neu1, real* neu1e
+){
+  for (long long d = 0; d < vocab[word_in].codelen; d++) {
+    real f = 0;
+    long long v1 = word_out * layer1_size;
+    long long v2 = vocab[word_in].point[d] * layer1_size;
+
+    // Propagate hidden -> output
+    for (long long c = 0; c < layer1_size; c++){
+      f += syn0[c + v1] * syn1[c + v2];
+    }
+    if (f <= -MAX_EXP) continue;
+    else if (f >= MAX_EXP) continue;
+    else f = sigmoidTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
+
+    // 'g' is the gradient multiplied by the learning rate
+    real g = (1 - vocab[word_in].code[d] - f) * alpha;
+
+    // Propagate errors output -> hidden
+    for (long long c = 0; c < layer1_size; c++) {
+      neu1e[c] += g * syn1[c + v2];
+    }
+
+    // Learn weights hidden -> output
+    for (long long c = 0; c < layer1_size; c++){
+      syn1[c + v2] += g * syn0[c + v1];
+    }
+  }
+}
+
+// removed cbow model
+// refactored
 void *TrainModelThread(void *id) {
-  long long a, b, d, word, last_word, sentence_length = 0, sentence_position = 0;
+  long long b, word, last_word, sentence_length = 0, sentence_position = 0;
   long long word_count = 0, last_word_count = 0, sen[MAX_SENTENCE_LENGTH + 1];
-  long long l1, l2, c, target, label;
+  long long l1, c;
   unsigned long long next_random = (long long)id;
-  real f, g;
   clock_t now;
   real *neu1 = (real *)calloc(layer1_size, sizeof(real));
   real *neu1e = (real *)calloc(layer1_size, sizeof(real));
@@ -423,114 +510,37 @@ void *TrainModelThread(void *id) {
     for (c = 0; c < layer1_size; c++) neu1e[c] = 0;
     next_random = next_random * (unsigned long long)25214903917 + 11;
     b = next_random % window;
-    if (cbow) {  //train the cbow architecture
-      // in -> hidden
-      for (a = b; a < window * 2 + 1 - b; a++) if (a != window) {
-        c = sentence_position - window + a;
-        if (c < 0) continue;
-        if (c >= sentence_length) continue;
-        last_word = sen[c];
-        if (last_word == -1) continue;
-        for (c = 0; c < layer1_size; c++) neu1[c] += syn0[c + last_word * layer1_size];
+    if (cbow) throw my_exception("cbow model is removed");
+
+    for (long long a = b; a < window * 2 + 1 - b; a++) if (a != window) {
+      c = sentence_position - window + a;
+      if (c < 0) continue;
+      if (c >= sentence_length) continue;
+      last_word = sen[c];
+      if (last_word == -1) continue;
+      l1 = last_word * layer1_size;
+
+      // reset neu1e
+      for (int i = 0; i < layer1_size; i++) neu1e[i] = 0;
+
+      // HIERARCHICAL SOFTMAX
+      if (hs) {
+        train_hierarchical_softmax(
+          word, last_word, alpha,
+          &next_random, neu1, neu1e);
       }
-      if (hs) for (d = 0; d < vocab[word].codelen; d++) {
-        f = 0;
-        l2 = vocab[word].point[d] * layer1_size;
-        // Propagate hidden -> output
-        for (c = 0; c < layer1_size; c++) f += neu1[c] * syn1[c + l2];
-        if (f <= -MAX_EXP) continue;
-        else if (f >= MAX_EXP) continue;
-        else f = sigmoidTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
-        // 'g' is the gradient multiplied by the learning rate
-        g = (1 - vocab[word].code[d] - f) * alpha;
-        // Propagate errors output -> hidden
-        for (c = 0; c < layer1_size; c++) neu1e[c] += g * syn1[c + l2];
-        // Learn weights hidden -> output
-        for (c = 0; c < layer1_size; c++) syn1[c + l2] += g * neu1[c];
-      }
+
       // NEGATIVE SAMPLING
-      if (negative > 0) for (d = 0; d < negative + 1; d++) {
-        if (d == 0) {
-          target = word;
-          label = 1;
-        } else {
-          next_random = next_random * (unsigned long long)25214903917 + 11;
-          target = table[(next_random >> 16) % table_size];
-          if (target == 0) target = next_random % (vocab_size - 1) + 1;
-          if (target == word) continue;
-          label = 0;
-        }
-        l2 = target * layer1_size;
-        f = 0;
-        for (c = 0; c < layer1_size; c++) f += neu1[c] * syn1neg[c + l2];
-        if (f > MAX_EXP) g = (label - 1) * alpha;
-        else if (f < -MAX_EXP) g = (label - 0) * alpha;
-        else g = (label - sigmoidTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))]) * alpha;
-        for (c = 0; c < layer1_size; c++) neu1e[c] += g * syn1neg[c + l2];
-        for (c = 0; c < layer1_size; c++) syn1neg[c + l2] += g * neu1[c];
+      if (negative > 0) {
+        train_negative_sampling(
+          word, last_word, alpha,
+          &next_random, neu1, neu1e);
       }
-      // hidden -> in
-      for (a = b; a < window * 2 + 1 - b; a++) if (a != window) {
-        c = sentence_position - window + a;
-        if (c < 0) continue;
-        if (c >= sentence_length) continue;
-        last_word = sen[c];
-        if (last_word == -1) continue;
-        for (c = 0; c < layer1_size; c++) syn0[c + last_word * layer1_size] += neu1e[c];
-      }
-    } else {  //train skip-gram
-      for (a = b; a < window * 2 + 1 - b; a++) if (a != window) {
-        c = sentence_position - window + a;
-        if (c < 0) continue;
-        if (c >= sentence_length) continue;
-        last_word = sen[c];
-        if (last_word == -1) continue;
-        l1 = last_word * layer1_size;
 
-        // reset neu1e
-        for (int i = 0; i < layer1_size; i++) neu1e[i] = 0;
-
-        // HIERARCHICAL SOFTMAX
-        if (hs) for (d = 0; d < vocab[word].codelen; d++) {
-          f = 0;
-          l2 = vocab[word].point[d] * layer1_size;
-          // Propagate hidden -> output
-          for (c = 0; c < layer1_size; c++) f += syn0[c + l1] * syn1[c + l2];
-          if (f <= -MAX_EXP) continue;
-          else if (f >= MAX_EXP) continue;
-          else f = sigmoidTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
-          // 'g' is the gradient multiplied by the learning rate
-          g = (1 - vocab[word].code[d] - f) * alpha;
-          // Propagate errors output -> hidden
-          for (c = 0; c < layer1_size; c++) neu1e[c] += g * syn1[c + l2];
-          // Learn weights hidden -> output
-          for (c = 0; c < layer1_size; c++) syn1[c + l2] += g * syn0[c + l1];
-        }
-        // NEGATIVE SAMPLING
-        if (negative > 0) for (d = 0; d < negative + 1; d++) {
-          if (d == 0) {
-            target = word;
-            label = 1;
-          } else {
-            next_random = next_random * (unsigned long long)25214903917 + 11;
-            target = table[(next_random >> 16) % table_size];
-            if (target == 0) target = next_random % (vocab_size - 1) + 1;
-            if (target == word) continue;
-            label = 0;
-          }
-          l2 = target * layer1_size;
-          f = 0;
-          for (c = 0; c < layer1_size; c++) f += syn0[c + l1] * syn1neg[c + l2];
-          if (f > MAX_EXP) g = (label - 1) * alpha;
-          else if (f < -MAX_EXP) g = (label - 0) * alpha;
-          else g = (label - sigmoidTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))]) * alpha;
-          for (c = 0; c < layer1_size; c++) neu1e[c] += g * syn1neg[c + l2];
-          for (c = 0; c < layer1_size; c++) syn1neg[c + l2] += g * syn0[c + l1];
-        }
-        // Learn weights input -> hidden
-        for (c = 0; c < layer1_size; c++) syn0[c + l1] += neu1e[c];
-      }
+      // Learn weights input -> hidden
+      for (c = 0; c < layer1_size; c++) syn0[c + l1] += neu1e[c];
     }
+
     sentence_position++;
     if (sentence_position >= sentence_length) {
       sentence_length = 0;
@@ -717,13 +727,6 @@ public:
 
 boost::python::list get_nearest(Data* data, float* vec, long long* ignore, int num_ignore);
 
-struct my_exception : std::exception
-{
-  my_exception(const char* message):_message(message){}
-  const char* what() const throw() { return _message; }
-  const char* _message;
-};
-
 void translate(my_exception const& e)
 {
   // Use the Python 'C' API to set up an exception object
@@ -872,13 +875,26 @@ boost::python::list get_vector(Data* data, std::string word){
   return ret;
 }
 
-boost::python::list get_outvector(int index){
+boost::python::list get_outvector_ns(int index){
   // out-vectors are not saved in output file
   // extract them from trained model
+  // this function is for negative-sampling model
   boost::python::list ret;
   if(index == -1) return ret;
-  for(size_t i = 0; i < layer1_size; i++){
+  for(long long i = 0; i < layer1_size; i++){
     ret.append(syn1neg[i + index * layer1_size]);
+  }
+  return ret;
+}
+
+boost::python::list get_outvector_hs(int index){
+  // out-vectors are not saved in output file
+  // extract them from trained model
+  // this function is for hierarchical-softmax model
+  boost::python::list ret;
+  if(index == -1) return ret;
+  for(long long i = 0; i < layer1_size; i++){
+    ret.append(syn1[i + index * layer1_size]);
   }
   return ret;
 }
@@ -887,7 +903,7 @@ boost::python::list get_invector(int index){
   // counter part of get_outvector
   boost::python::list ret;
   if(index == -1) return ret;
-  for(size_t i = 0; i < layer1_size; i++){
+  for(long long i = 0; i < layer1_size; i++){
     ret.append(syn0[i + index * layer1_size]);
   }
   return ret;
@@ -1083,7 +1099,8 @@ BOOST_PYTHON_MODULE(word2vec_ext)
     def("get_word", get_word);
     def("get_word_index", get_word_index);
     def("get_vector", get_vector);
-    def("get_outvector", get_outvector);
+    def("get_outvector_hs", get_outvector_hs);
+    def("get_outvector_ns", get_outvector_ns);
     def("get_invector", get_invector);
     def("find_add", find_add);
     def("find_sub", find_sub);

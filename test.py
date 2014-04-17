@@ -7,10 +7,20 @@ def test(x, y=None):
 
     assert x == y
 
+if 0:  # because of clean-up was not done properly, these tests broke next tests
+    w2v.run('-train tiny_corpus.txt -output tiny_corpus.bin -hs 1 -binary 1 -size 2'.split())
+
+    test(w2v.get_outvector_hs(1),
+         [0.7281824350357056, 0.27238667011260986])
+
+    invec = w2v.get_invector(1)
+    test(invec,
+         [-0.45740053057670593, 1.1142560243606567])
+
 
 w2v.run('-train tiny_corpus.txt -output tiny_corpus.bin -hs 0 -negative 5 -binary 1 -size 10'.split())
 
-test(w2v.get_outvector(1),
+test(w2v.get_outvector_ns(1),
      [0.1442144811153412, -0.274962455034256, -1.260462999343872,
       -0.42235079407691956, 0.15925364196300507, -0.6748839616775513,
       -1.4316737651824951, 0.473715215921402, 0.5771697759628296,
