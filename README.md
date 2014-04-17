@@ -2,7 +2,8 @@
 
 word2vec binding for Python using Boost.Python
 
-It's pre-alpha status, interfaces may change.
+Its goal: good wrapper to easily handle vectors which were created by word2vec.
+For example, `get_vectors` returns Numpy's ndarray.
 
 Original C implementation: https://code.google.com/p/word2vec/
 
