@@ -387,6 +387,7 @@ void train_negative_sampling(
 ){
   long long target;
   long long label; // 1 for correct sample, 0 for random sample
+  long long v1 = word_out * layer1_size;
   for (long long d = 0; d < negative + 1; d++) {
     if (d == 0) {
       target = word_in;
@@ -398,7 +399,6 @@ void train_negative_sampling(
       if (target == word_in) continue;
       label = 0;
     }
-    long long v1 = word_out * layer1_size;
     long long v2 = target * layer1_size;
 
     real f = 0, g;
@@ -421,6 +421,10 @@ void train_negative_sampling(
       syn1neg[c + v2] += g * syn0[c + v1];
     }
   }
+  // Learn weights input -> hidden
+  for (long long c = 0; c < layer1_size; c++){
+    syn0[c + v1] += neu1e[c];
+  }
 }
 
 void train_hierarchical_softmax(
@@ -429,9 +433,9 @@ void train_hierarchical_softmax(
   long long unsigned* next_random,
   real* neu1, real* neu1e
 ){
+  long long v1 = word_out * layer1_size;
   for (long long d = 0; d < vocab[word_in].codelen; d++) {
     real f = 0;
-    long long v1 = word_out * layer1_size;
     long long v2 = vocab[word_in].point[d] * layer1_size;
 
     // Propagate hidden -> output
@@ -455,6 +459,10 @@ void train_hierarchical_softmax(
       syn1[c + v2] += g * syn0[c + v1];
     }
   }
+  // Learn weights input -> hidden
+  for (long long c = 0; c < layer1_size; c++){
+    syn0[c + v1] += neu1e[c];
+  }
 }
 
 // removed cbow model
@@ -462,7 +470,7 @@ void train_hierarchical_softmax(
 void *TrainModelThread(void *id) {
   long long b, word, last_word, sentence_length = 0, sentence_position = 0;
   long long word_count = 0, last_word_count = 0, sen[MAX_SENTENCE_LENGTH + 1];
-  long long l1, c;
+  long long c;
   unsigned long long next_random = (long long)id;
   clock_t now;
   real *neu1 = (real *)calloc(layer1_size, sizeof(real));
@@ -518,7 +526,6 @@ void *TrainModelThread(void *id) {
       if (c >= sentence_length) continue;
       last_word = sen[c];
       if (last_word == -1) continue;
-      l1 = last_word * layer1_size;
 
       // reset neu1e
       for (int i = 0; i < layer1_size; i++) neu1e[i] = 0;
@@ -536,9 +543,6 @@ void *TrainModelThread(void *id) {
           word, last_word, alpha,
           &next_random, neu1, neu1e);
       }
-
-      // Learn weights input -> hidden
-      for (c = 0; c < layer1_size; c++) syn0[c + l1] += neu1e[c];
     }
 
     sentence_position++;
