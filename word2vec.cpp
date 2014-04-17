@@ -1060,11 +1060,16 @@ void run(boost::python::list args){
   word2vec_main(N + 1, argv);
 }
 
-float data[12] = {1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5};
-PyObject* test(){
-  long dims[2] = {3, 4};
-  return PyArray_SimpleNewFromData(2, dims, NPY_FLOAT32, data);
+PyObject* get_vectors(Data* data){
+  long dims[2] = {data->words, data->size};
+  return PyArray_SimpleNewFromData(2, dims, NPY_FLOAT32, data->matrix);
 }
+
+
+void test(){
+}
+
+
 
 
 BOOST_PYTHON_MODULE(word2vec_ext)
@@ -1085,6 +1090,7 @@ BOOST_PYTHON_MODULE(word2vec_ext)
     def("find_analogy", find_analogy);
     def("get_sum_vector", get_sum_vector);
     def("find_with_vector", find_with_vector);
+    def("get_vectors", get_vectors);
     def("run", run);
     def("test", test);
     import_array();

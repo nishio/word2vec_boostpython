@@ -38,10 +38,17 @@ test(
 data2 = w2v.load_without_normalize("tiny_corpus.bin");
 
 words = [w2v.get_word(data2, i) for i in range(w2v.get_num_words(data2))]
+
 test(words[1], 'd')
 test(w2v.get_vector(data2, 'd'), invec)
+test(list(w2v.get_vectors(data2)[1]), invec)
+
 
 test(w2v.find_sub(data, ['A', 'b'], ['a'])[:5],
      ['B', '2', 'H', 'h', '8'])  # 'A' + 'b' - 'a'
 
+
+
+
+# test in C++, for easy develop
 w2v.test()
