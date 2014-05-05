@@ -12,16 +12,13 @@ Code License: Apache License 2.0 (same to original project)
 
 ## How to use
 
-You need to fix some hard-coded config. If you know how to automate this, please help me.
+If you are using Ubuntu,
 
-path to boost in Jamroot:
+    $ sudo apt-get install libboost_all_dev
 
-    use-project boost
-      : /home/nishio/boost_1_55_0 ;
+If you use other OS, install boost and fix path in setup.py.
 
-path to boost tools in boost-build:
+Then run:
 
-    boost-build /home/nishio/boost_1_55_0/tools/build/v2 ;
-
-Then run $ <bjam_path>/bjam
+    $ sudo python setup.py install
 

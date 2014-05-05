@@ -1,4 +1,4 @@
-import word2vec_ext as w2v
+import word2vec_boostpython as w2v
 
 def test(x, y=None):
     if not x == y:

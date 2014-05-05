@@ -4,4 +4,4 @@
 
 # Edit this path to point at the tools/build/v2 subdirectory of your
 # Boost installation.  Absolute paths work, too.
-boost-build /home/nishio/boost_1_55_0/tools/build/v2 ;
+boost-build /usr/share/boost-build/kernel ;

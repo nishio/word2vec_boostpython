@@ -14,8 +14,7 @@ if ! [ python.configured ]
 # Specify the path to the Boost project.  If you move this project,
 # adjust this path to refer to the Boost root directory.
 use-project boost
-  : /home/nishio/boost_1_55_0 ;
-
+  : /usr/share/boost-build/kernel ;
 # Set up the project-wide requirements that everything uses the
 # boost_python library from the project whose global ID is
 # /boost/python.
@@ -27,12 +26,12 @@ project
 
 # Declare the three extension modules.  You can specify multiple
 # source files after the colon separated by spaces.
-python-extension word2vec_ext : word2vec.cpp ;
+python-extension word2vec_boostpython : word2vec.cpp ;
 
 # Put the extension and Boost.Python DLL in the current directory, so
 # that running script by hand works.
 install convenient_copy 
-  : word2vec_ext 
+  : word2vec_boostpython 
   : <install-dependencies>on <install-type>SHARED_LIB <install-type>PYTHON_EXTENSION 
     <location>. 
   ;
@@ -46,4 +45,4 @@ local rule run-test ( test-name : sources + )
 }
 
 # Declare test targets
-run-test word2vec : word2vec_ext test.py ;
+run-test word2vec : word2vec_boostpython test.py ;

@@ -1092,7 +1092,7 @@ void test(){
 
 
 
-BOOST_PYTHON_MODULE(word2vec_ext)
+BOOST_PYTHON_MODULE(word2vec_boostpython)
 {
     using namespace boost::python;
     def("load", load, return_value_policy<manage_new_object>());
